@@ -1,0 +1,9 @@
+#!/bin/bash
+# location:/lib/systemd/system/teamspeak3.service
+# executable should have +X permissions
+[Unit]
+Description=Teamspeak3 Server
+
+[Service]
+User=TS_USER
+ExecStart=/home/TS_USER/ts3server_minimal_runscript.sh start inifile=ts3server.ini

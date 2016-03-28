@@ -3,6 +3,7 @@
 # causes the shell to exit if any subcommand or pipeline returns a non-zero status
 set -e
 
+platform=$1
 app=teamspeak
 db_user=teamspeak
 
@@ -21,7 +22,15 @@ ts3_path=/home/$db_user
 sudo useradd $db_user -m
 
 # Copy source amd64 files to ts3 path (3.0.12.3)
-sudo cp -a ../source/amd64/. $ts3_path
+if [ "$platform" = "64" ];
+then
+  sudo cp -a ../source/amd64/. $ts3_path
+fi
+
+if [ "$platform" = "32" ];
+then
+  sudo cp -a ../source/x86/. $ts3_path
+fi
 
 # Configure TS3 + MySQL / MariaDB
 sed -i "s@DB_USER@$db_user@g" ../config/ts3db_mariadb.ini
@@ -34,9 +43,20 @@ sudo chown -R $db_user:$db_user $ts3_path
 
 # Install required lib libmariadb2
 cd /tmp/
-sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_amd64.deb
-sudo dpkg -i libmariadb2_2.0.0-1_amd64.deb
-sudo rm libmariadb2_2.0.0-1_amd64.deb
+
+if [ "$platform" = "64" ];
+then
+  sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_amd64.deb
+  sudo dpkg -i libmariadb2_2.0.0-1_amd64.deb
+  sudo rm libmariadb2_2.0.0-1_amd64.deb
+fi
+
+if [ "$platform" = "32" ];
+then
+  sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_i386.deb
+  sudo dpkg -i libmariadb2_2.0.0-1_i386.deb
+  sudo rm libmariadb2_2.0.0-1_i386.deb
+fi
 
 # Add firewall rules
 sudo yunohost firewall allow UDP 9987

@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# causes the shell to exit if any subcommand or pipeline returns a non-zero status
+set -e
+
+# Set common variables
+app=teamspeak
+db_user=$(sudo yunohost app setting $app mysqldb)
+root_pwd=$(sudo cat /etc/yunohost/mysql)
+
+# Disable and remove service
+sudo systemctl stop $app.service
+sudo systemctl disable $app.service
+sudo rm /lib/systemd/system/$app.service
+
+# Remove teamspeak user, folder and files
+sudo userdel -r $db_user
+
+# Remove teamspeak database
+mysql -u root -p$root_pwd -e "DROP DATABASE $db_user ; DROP USER $db_user@localhost ;"

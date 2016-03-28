@@ -35,8 +35,8 @@ sudo chown -R $db_user:$db_user $ts3_path
 cd /tmp/
 sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_amd64.deb
 sudo dpkg -i libmariadb2_2.0.0-1_amd64.deb
+sudo rm libmariadb2_2.0.0-1_amd64.deb
 
 # Enable and start service
 sudo systemctl enable $app.service
 sudo systemctl start $app.service
-sudo yunohost app ssowatconf

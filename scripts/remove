@@ -16,5 +16,13 @@ sudo rm /lib/systemd/system/$app.service
 # Remove teamspeak user, folder and files
 sudo userdel -r $db_user
 
+# Add firewall rules
+sudo yunohost firewall disallow UDP 9987
+sudo yunohost firewall disallow TCP 10011
+sudo yunohost firewall disallow TCP 30033
+
+# Remove yunohost teamspeak service
+sudo yunohost service remove teamspeak
+
 # Remove teamspeak database
 mysql -u root -p$root_pwd -e "DROP DATABASE $db_user ; DROP USER $db_user@localhost ;"

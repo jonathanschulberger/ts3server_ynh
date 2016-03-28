@@ -1,6 +1,9 @@
 #!/bin/bash
 # location:/lib/systemd/system/teamspeak3.service
 # executable should have +X permissions
+[Install]
+WantedBy=multi-user.target
+
 [Unit]
 Description=Teamspeak3 Server
 

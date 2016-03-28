@@ -7,11 +7,6 @@ set -e
 app=teamspeak
 db_user=teamspeak
 
-# Install required lib libmariadb2
-cd /tmp/
-sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_amd64.deb
-sudo dpkg -i libmariadb2_2.0.0-1_amd64.deb
-
 # Generate random DES key & password
 deskey=$(dd if=/dev/urandom bs=1 count=200 2> /dev/null | tr -c -d '[A-Za-z0-9]' | sed -n 's/\(.\{24\}\).*/\1/p')
 db_pwd=$(dd if=/dev/urandom bs=1 count=200 2> /dev/null | tr -c -d '[A-Za-z0-9]' | sed -n 's/\(.\{24\}\).*/\1/p')
@@ -32,12 +27,17 @@ sudo cp -a ../source/amd64/. $ts3_path
 # Configure TS3 + MySQL / MariaDB
 sed -i "s@DB_USER@$db_user@g" ../config/ts3db_mariadb.ini
 sed -i "s@DB_PW@$db_pwd@g" ../config/ts3db_mariadb.ini
+sed -i "s@TS_USER@$db_user@g" ../config/ts3server.service
 sudo cp ../config/ts3db_mariadb.ini $ts3_path/ts3db_mariadb.ini
+sudo cp ../config/ts3server.service /lib/systemd/system/$app.service
 sudo chown -R $db_user:$db_user $ts3_path
 
-# Install and start service
-sed -i "s@TS_USER@$db_user@g" ../config/ts3server.service
-sudo cp ../config/ts3server.service /lib/systemd/system/$app.service
+# Install required lib libmariadb2
+cd /tmp/
+sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_amd64.deb
+sudo dpkg -i libmariadb2_2.0.0-1_amd64.deb
+
+# Enable and start service
 sudo systemctl enable $app.service
 sudo systemctl start $app.service
 sudo yunohost app ssowatconf

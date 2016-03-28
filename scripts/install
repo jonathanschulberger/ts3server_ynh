@@ -28,6 +28,7 @@ sed -i "s@DB_USER@$db_user@g" ../config/ts3db_mariadb.ini
 sed -i "s@DB_PW@$db_pwd@g" ../config/ts3db_mariadb.ini
 sed -i "s@TS_USER@$db_user@g" ../config/ts3server.service
 sudo cp ../config/ts3db_mariadb.ini $ts3_path/ts3db_mariadb.ini
+sudo cp ../config/ts3server.ini $ts3_path/ts3server.ini
 sudo cp ../config/ts3server.service /lib/systemd/system/$app.service
 sudo chown -R $db_user:$db_user $ts3_path
 

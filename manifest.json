@@ -2,13 +2,17 @@
     "name": "TeamSpeak3 Server",
     "id": "teamspeak3",
     "description": {
-        "en": "Cross-platform voice communication server",
+        "en": "Cross-platform voice communication server"
     },
     "url": "http://teamspeak.com/",
     "license": "non-free",
     "maintainer": {
         "name": "KnooL",
         "email": "sander@dmafsu.nl"
+    },
+    "services": {
+    },
+    "arguments": {
     },
     "multi_instance": "false"
 }

@@ -8,11 +8,21 @@
     "license": "non-free",
     "maintainer": {
         "name": "KnooL",
-        "email": "sander@dmafsu.nl"
+        "email": "sander@lienaerts.nl"
     },
-    "services": {
-    },
+    "services": [ "mysql" ],
     "arguments": {
+        "install" : [
+            {
+                "name": "System-OS Platform",
+                "type": "64bit or 32bit? (x64 vs x86)",
+                "ask": {
+                    "en": "64 bit or 32 bit? (x64 vs x86)"
+                },
+                "example": "64",
+                "default": "64"
+            }
+        ]
     },
     "multi_instance": "false"
 }

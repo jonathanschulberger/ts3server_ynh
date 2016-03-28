@@ -12,7 +12,7 @@ yunohost app install https://github.com/KnooL/ts3_ynh
 ```
 
 ## Features
-- [x] Installer (x64)
+- [x] Installer (x64/x86)
 - [x] Uninstaller
 - [x] MariaDB instead of SQLite
 - [x] Integrated service (systemd and yunohost-admin)
@@ -32,4 +32,4 @@ tcp   | 0.0.0.0:10011             |       LISTEN    |  11306/ts3server
 tcp    |  0.0.0.0:30033            |      LISTEN    |  11306/ts3server 
 udp     | 0.0.0.0:9987              | |   11306/ts3server 
 
-# Does not work on x86 systems!
+# x86 systems untested?!

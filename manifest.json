@@ -1,6 +1,6 @@
 {
     "name": "TeamSpeak3 Server",
-    "id": "teamspeak3",
+    "id": "teamspeak",
     "description": {
         "en": "Cross-platform voice communication server"
     },

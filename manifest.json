@@ -8,7 +8,8 @@
     "license": "non-free",
     "maintainer": {
         "name": "KnooL",
-        "email": "sander@lienaerts.nl"
+        "email": "sander@lienaerts.nl",
+        "url": "https://github.com/KnooL"
     },
     "services": [ "mysql" ],
     "arguments": {

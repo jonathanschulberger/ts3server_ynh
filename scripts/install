@@ -24,13 +24,15 @@ sudo useradd $db_user -m
 # Copy source amd64 files to ts3 path (3.0.12.3)
 if [ "$platform" = "64" ];
 then
-  sudo cp -a ../source/amd64/. $ts3_path
+  arch=amd64
 fi
 
 if [ "$platform" = "32" ];
 then
-  sudo cp -a ../source/x86/. $ts3_path
+  arch=i386
 fi
+
+sudo cp -a ../source/$arch/. $ts3_path
 
 # Configure TS3 + MySQL / MariaDB
 sed -i "s@DB_USER@$db_user@g" ../config/ts3db_mariadb.ini
@@ -46,17 +48,18 @@ cd /tmp/
 
 if [ "$platform" = "64" ];
 then
-  sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_amd64.deb
-  sudo dpkg -i libmariadb2_2.0.0-1_amd64.deb
-  sudo rm libmariadb2_2.0.0-1_amd64.deb
+  arch=amd64
 fi
 
 if [ "$platform" = "32" ];
 then
-  sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_i386.deb
-  sudo dpkg -i libmariadb2_2.0.0-1_i386.deb
-  sudo rm libmariadb2_2.0.0-1_i386.deb
+  arch=i386
 fi
+
+sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_$arch.deb
+sudo dpkg -i libmariadb2_2.0.0-1_$arch.deb
+sudo rm libmariadb2_2.0.0-1_$arch.deb
+
 
 # Add firewall rules
 sudo yunohost firewall allow UDP 9987

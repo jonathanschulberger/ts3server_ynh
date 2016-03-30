@@ -42,6 +42,7 @@ sudo cp ../config/ts3db_mariadb.ini $ts3_path/ts3db_mariadb.ini
 sudo cp ../config/ts3server.ini $ts3_path/ts3server.ini
 sudo cp ../config/ts3server.service /lib/systemd/system/$app.service
 sudo chown -R $db_user:$db_user $ts3_path
+sudo systemctl daemon-reload
 
 # Install required lib libmariadb2
 cd /tmp/

@@ -6,6 +6,9 @@ set -eu
 # YunoHost app helpers
 source /usr/share/yunohost/helpers
 
+# App specific common variables and helpers
+source ./_common.sh
+
 # Retrieve install arguments
 app=$YNH_APP_INSTANCE_NAME
 admin=$YNH_APP_ARG_ADMIN
@@ -36,6 +39,10 @@ ynh_user_exists $admin \
 # System account user
 ynh_system_user_exists $app \
   && ynh_die "$app system user account already exists. You should safely remove the user account before installing this app."
+  
+# Server root directory
+[[ -d "$server_root" ]] \
+  && ynh_die "The directory '$server_root' already exists. You should safely delete it before installing this app."
   
 # MySQL
 # TODO: check if user exists (to prevent deletion in remove script)
@@ -75,17 +82,7 @@ sudo yunohost firewall allow TCP 30033
 ##
 
 # Copy source file to server root
-if [ "$arch" = "64" ];
-then
-  arch=amd64
-fi
-
-if [ "$arch" = "32" ];
-then
-  arch=x86
-fi
-
-sudo cp -a ../source/$arch/. $ts3_path
+extract_ts3server $arch "$server_root" $app
 
 # Write values to config templates
 sed -i "s@DBUSER@$dbuser@g" ../config/ts3db_mariadb.ini

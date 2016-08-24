@@ -1,12 +1,10 @@
-#!/bin/bash
-# location:/lib/systemd/system/teamspeak3.service
-# executable should have +X permissions
-[Install]
-WantedBy=multi-user.target
-
 [Unit]
-Description=Teamspeak3 Server
+Description=Teamspeak 3 Server
+After=network.target mysql.service
 
 [Service]
 User=TS_USER
-ExecStart=/home/TS_USER/ts3server_minimal_runscript.sh start inifile=ts3server.ini
+ExecStart=SERVER_ROOT/ts3server_minimal_runscript.sh start inifile=ts3server.ini
+
+[Install]
+WantedBy=multi-user.target

@@ -1,29 +1,44 @@
 {
-    "name": "TeamSpeak3 Server",
-    "id": "teamspeak",
-    "description": {
-        "en": "Cross-platform voice communication server"
+	"packaging_format": 1,
+	"id": "ts3server",
+	"name": "TeamSpeak 3 Server",
+	"description": {
+		"en": "Cross-platform voice communication server"
+	},
+	"url": "http://teamspeak.com/",
+	"license": "free",
+	"maintainer": {
+		"name": "MidgetMob",
+		"email": "jschoulzy@gmail.com",
+		"url": "https://github.com/MidgetMob"
     },
-    "url": "http://teamspeak.com/",
-    "license": "non-free",
-    "maintainer": {
-        "name": "KnooL",
-        "email": "sander@lienaerts.nl",
-        "url": "https://github.com/KnooL"
-    },
-    "services": [ "mysql" ],
+	"requirements": {
+		"yunohost": ">= 2.4.2"
+	},
+	"multi_instance": false,
+    "services": [ 
+		"mariadb",
+		"nginx",
+		"php5-fpm"
+	],
     "arguments": {
         "install" : [
             {
-                "name": "System-OS Platform",
-                "type": "64bit or 32bit? (x64 vs x86)",
+				"name": "admin",
+				"type": "user",
+				"ask": {
+					"en": "Specify an admin user (must be an existing YunoHost user)"
+				},
+				"example": "caretaker"
+			},
+			{
+                "name": "arch",
                 "ask": {
-                    "en": "64 bit or 32 bit? (x64 vs x86)"
+                    "en": "Choose an architecture (must match your server architecture)"
                 },
-                "example": "64",
-                "default": "64"
+                "choices": ["x86", "amd64"],
+                "default": "amd64"
             }
         ]
-    },
-    "multi_instance": "false"
+    }
 }

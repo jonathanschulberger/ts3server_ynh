@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # causes the shell to exit if any subcommand or pipeline returns a non-zero status
-set -e
+set -eu
 
+app=$YNH_APP_INSTANCE_NAME
 platform=$1
-app=teamspeak
 db_user=teamspeak
 
 # Generate random DES key & password
@@ -70,4 +70,4 @@ sudo yunohost firewall allow TCP 30033
 # Enable and start service
 sudo systemctl enable $app.service
 sudo systemctl start $app.service
-sudo yunohost service add teamspeak -l $ts3_path/logs/ts3server_0.log
+sudo yunohost service add $app

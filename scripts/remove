@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # causes the shell to exit if any subcommand or pipeline returns a non-zero status
-set -e
+set -eu
 
 # Set common variables
-app=teamspeak
+app=$YNH_APP_INSTANCE_NAME
 db_user=$(sudo yunohost app setting $app mysqldb)
 root_pwd=$(sudo cat /etc/yunohost/mysql)
 
@@ -22,7 +22,7 @@ sudo yunohost firewall disallow TCP 10011
 sudo yunohost firewall disallow TCP 30033
 
 # Remove yunohost teamspeak service
-sudo yunohost service remove teamspeak
+sudo yunohost service remove $app
 
 # Remove teamspeak database
 mysql -u root -p$root_pwd -e "DROP DATABASE $db_user ; DROP USER $db_user@localhost ;"

@@ -9,10 +9,14 @@ source /usr/share/yunohost/helpers
 # App specific common variables and helpers
 source ./_common.sh
 
-# Retrieve install arguments
+# Retrieve arguments
 app=$YNH_APP_INSTANCE_NAME
 admin=$YNH_APP_ARG_ADMIN
 arch=$YNH_APP_ARG_ARCH
+dbtype=$YNH_APP_ARG_DBTYPE
+declare -A ports=( [voice]=$YNH_APP_ARG_PORT_VOICE \
+				   [query]=$YNH_APP_ARG_PORT_QUERY \
+				   [filetr]=$YNH_APP_ARG_PORT_FILETR )
 
 # Application specific variables
 dbname=$app
@@ -49,20 +53,29 @@ ynh_system_user_exists $app \
 ynh_mysql_execute_as_root '' $dbname > /dev/null 2>&1 \
   && ynh_die "SQL database already exists. You should safely delete it before installing this app."
 
+# Ports
+for i in "${ports[@]}"; do
+	if ! [[ $i != *[!0-9]* ]]; then
+		ynh_die "Only numbers are allowed for port definitions."
+	elif [[ $i -le 1024 ]]; then
+		ynh_die "Ports must be higher than 1024."
+	fi	
+done
+
 # Remove checks setting as it's unecessary - setup should run perfectly
 ynh_app_setting_delete $app chk_fail
 
 ##
 ## Beginning setup
 ##
-  
+
 # Admin user
 ynh_app_setting_set $app admin $admin
 
 # System account user
 sudo useradd -c "$app system account" -d "$server_root" --system --user-group $app \
   || ynh_die "Unable to create $app system account."
-  
+
 # Server root directory (must set ownership before extraction)
 sudo mkdir -p "$server_root"
 sudo chown -R $app: "$server_root"
@@ -72,27 +85,40 @@ ynh_app_setting_set $app server_root "$server_root"
 ynh_mysql_create_db $dbname $dbuser $dbpass
 ynh_app_setting_set $app mysqlpwd $dbpass
 
-# Add firewall rules
-sudo yunohost firewall allow UDP 9987
-sudo yunohost firewall allow TCP 10011
-sudo yunohost firewall allow TCP 30033
+# Ports
+sudo yunohost firewall allow --no-reload UDP ${ports[voice]}
+sudo yunohost firewall allow --no-reload TCP ${ports[query]}
+sudo yunohost firewall allow TCP ${ports[filetr]}
 
 ##
 ## Installation and Ownership/Permissions
 ##
 
-# Copy source file to server root
+# Copy source files to server root
 extract_ts3server $arch "$server_root" $app
 
 # Write values to config templates
+# TODO: determine if I want to only fill out used template
 sed -i "s@DBUSER@$dbuser@g" ../config/ts3db_mariadb.ini
 sed -i "s@DBPW@$dbpass@g" ../config/ts3db_mariadb.ini
 sed -i "s@APP@$app@g" ../config/ts3db_mariadb.ini
 sed -i "s@TS_USER@$dbuser@g" ../config/ts3server.service
 sed -i "s@SERVER_ROOT@$server_root@g" ../config/ts3server.service
-sudo cp ../config/ts3db_mariadb.ini "${server_root}/ts3db_mariadb.ini"
-sudo cp ../config/ts3server.ini "${server_root}/ts3server.ini"
-sudo cp "${server_root}/redist/libmariadb.so.2" "${server_root}/libmariadb.so.2"
+sed -i "s@PT_VOICE@${ports[voice]}@g" ../config/ts3server_mariadb.ini
+sed -i "s@PT_QUERY@${ports[query]}@g" ../config/ts3server_mariadb.ini
+sed -i "s@PT_FILE@${ports[filetr]}@g" ../config/ts3server_mariadb.ini
+sed -i "s@PT_VOICE@${ports[voice]}@g" ../config/ts3server_sqlite.ini
+sed -i "s@PT_QUERY@${ports[query]}@g" ../config/ts3server_sqlite.ini
+sed -i "s@PT_FILE@${ports[filetr]}@g" ../config/ts3server_sqlite.ini
+
+# Config file and necessary plugin installation
+if [[ $dbtype == "MariaDB" ]]; then
+	sudo cp "${server_root}/redist/libmariadb.so.2" "${server_root}/libmariadb.so.2"
+	sudo cp ../config/ts3db_mariadb.ini "${server_root}/ts3db_mariadb.ini"
+	sudo cp ../config/ts3server_mariadb.ini "${server_root}/ts3server.ini"
+else
+	sudo cp ../config/ts3server_sqlite.ini "${server_root}/ts3server.ini"
+fi
 
 # Copy service file to respective location
 # TODO: replace with init.d script

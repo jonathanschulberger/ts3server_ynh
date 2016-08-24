@@ -1,28 +1,42 @@
 #!/bin/bash
 
 # causes the shell to exit if any subcommand or pipeline returns a non-zero status
-set -eu
+set -e
+
+# Source YunoHost helpers
+source /usr/share/yunohost/helpers
 
 # Set common variables
 app=$YNH_APP_INSTANCE_NAME
-db_user=$(sudo yunohost app setting $app mysqldb)
-root_pwd=$(sudo cat /etc/yunohost/mysql)
+dbname=$app
+dbuser=$app
 
-# Disable and remove service
-sudo systemctl stop $app.service
-sudo systemctl disable $app.service
-sudo rm /lib/systemd/system/$app.service
+# See if checks succeeded
+if [[ $(ynh_app_setting_get $app chk_fail) ]]; then
+	echo "One or more checks failed. For more information, see the log."
+else
+	# System service
+	sudo systemctl stop $app.service || true
+	sudo systemctl disable $app.service || true
+	sudo rm /lib/systemd/system/$app.service || true
+	sudo systemctl daemon-reload
+	
+	# YunoHost service
+	sudo yunohost service remove $app || true
 
-# Remove teamspeak user, folder and files
-sudo userdel -r $db_user
+	# System user
+	sudo userdel -r $app || true
 
-# Add firewall rules
-sudo yunohost firewall disallow UDP 9987
-sudo yunohost firewall disallow TCP 10011
-sudo yunohost firewall disallow TCP 30033
+	# Server root folder
+	# TODO: also remove backup path or tell user to manually remove
+	sudo rm -rf "$(ynh_app_setting_get $app server_root)" || true
 
-# Remove yunohost teamspeak service
-sudo yunohost service remove $app
+	# Remove firewall rules
+	# TODO: Get these from ts3server.ini
+	sudo yunohost firewall disallow --no-reload UDP 9987
+	sudo yunohost firewall disallow --no-reload TCP 10011
+	sudo yunohost firewall disallow TCP 30033
 
-# Remove teamspeak database
-mysql -u root -p$root_pwd -e "DROP DATABASE $db_user ; DROP USER $db_user@localhost ;"
+	# MariaDB database
+	ynh_mysql_drop_db "$dbname" 2>/dev/null || true
+fi

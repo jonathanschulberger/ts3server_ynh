@@ -11,7 +11,7 @@
 		"name": "MidgetMob",
 		"email": "jschoulzy@gmail.com",
 		"url": "https://github.com/MidgetMob"
-    },
+	},
 	"requirements": {
 		"yunohost": ">= 2.4.2"
 	},
@@ -38,7 +38,36 @@
                 },
                 "choices": ["x86", "amd64"],
                 "default": "amd64"
-            }
+            },
+			{
+                "name": "dbtype",
+                "ask": {
+                    "en": "Choose a database type"
+                },
+                "choices": ["MariaDB", "SQLite"],
+                "default": "MariaDB"
+            },
+			{
+				"name": "port_voice",
+                "ask": {
+                    "en": "You may specify an alternate UDP voice port (higher than 1024)"
+                },
+                "default": "9987"
+			},
+			{
+				"name": "port_query",
+                "ask": {
+                    "en": "You may specify an alternate TCP query port (higher than 1024)"
+                },
+                "default": "10011"
+			},
+			{
+				"name": "port_filetr",
+                "ask": {
+                    "en": "You may specify an alternate TCP file transfer port (higher than 1024)"
+                },
+                "default": "30033"
+			}
         ]
     }
 }

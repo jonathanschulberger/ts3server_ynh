@@ -133,3 +133,8 @@ sudo rm libmariadb2_2.0.0-1_$arch.deb
 sudo systemctl enable ${app}.service
 sudo yunohost service add $app
 sudo yunohost service start $app
+
+# Let's use the initial log file to get the admin token
+# Wait for generation of file
+sleep 5
+sudo cat "${server_root}/logs/ts3server_1.log" | sed -n -e 's/.*token=/Server Admin Token: /p'

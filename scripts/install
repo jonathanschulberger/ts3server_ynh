@@ -92,6 +92,7 @@ sed -i "s@TS_USER@$dbuser@g" ../config/ts3server.service
 sed -i "s@SERVER_ROOT@$server_root@g" ../config/ts3server.service
 sudo cp ../config/ts3db_mariadb.ini "${server_root}/ts3db_mariadb.ini"
 sudo cp ../config/ts3server.ini "${server_root}/ts3server.ini"
+sudo cp "${server_root}/redist/libmariadb.so.2" "${server_root}/libmariadb.so.2"
 
 # Copy service file to respective location
 # TODO: replace with init.d script
@@ -108,23 +109,6 @@ sudo find ${app_root}/ -type f -name "*.sh" -print0 -o -name "ts3server" -print0
 ##
 ## Finishing touches
 ##
-
-# Install required lib libmariadb2
-cd /tmp/
-
-if [ "$arch" = "64" ];
-then
-  arch=amd64
-fi
-
-if [ "$arch" = "32" ];
-then
-  arch=x86
-fi
-
-sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_$arch.deb
-sudo dpkg -i libmariadb2_2.0.0-1_$arch.deb
-sudo rm libmariadb2_2.0.0-1_$arch.deb
 
 # Enable and start service
 sudo systemctl enable ${app}.service

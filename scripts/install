@@ -3,71 +3,133 @@
 # causes the shell to exit if any subcommand or pipeline returns a non-zero status
 set -eu
 
+# YunoHost app helpers
+source /usr/share/yunohost/helpers
+
+# Retrieve install arguments
 app=$YNH_APP_INSTANCE_NAME
-platform=$1
-db_user=teamspeak
+admin=$YNH_APP_ARG_ADMIN
+arch=$YNH_APP_ARG_ARCH
 
-# Generate random DES key & password
-deskey=$(dd if=/dev/urandom bs=1 count=200 2> /dev/null | tr -c -d '[A-Za-z0-9]' | sed -n 's/\(.\{24\}\).*/\1/p')
-db_pwd=$(dd if=/dev/urandom bs=1 count=200 2> /dev/null | tr -c -d '[A-Za-z0-9]' | sed -n 's/\(.\{24\}\).*/\1/p')
+# Application specific variables
+dbname=$app
+dbuser=$app
+dbpass=$(ynh_string_random 16)
+app_root="/home/yunohost.app/$app"
+server_root="${app_root}/server"
 
-# Initialize database and store variables for future use
-sudo yunohost app initdb $db_user -p $db_pwd
-sudo yunohost app setting $app mysqldb -v "$db_user"
-sudo yunohost app setting $app mysqlusr -v "$db_user"
-sudo yunohost app setting $app mysqlpwd -v "$db_pwd"
+##
+## Beginning checks
+## 
 
-# Initialize user with homefolder, where we store teamspeak3 files
-ts3_path=/home/$db_user
-sudo useradd $db_user -m
+# Helps keep removal script simpler and more accurate by removing
+#  the need for checks in BOTH install and remove scripts
+ynh_app_setting_set $app chk_fail 0
 
-# Copy source amd64 files to ts3 path (3.0.12.3)
-if [ "$platform" = "64" ];
-then
-  arch=amd64
-fi
+# TODO: check if teamspeak is already running
+# TODO: Domain/path
 
-if [ "$platform" = "32" ];
-then
-  arch=i386
-fi
+# YunoHost admin user
+ynh_user_exists $admin \
+  || ynh_die "The chosen admin user does not exist."
+  
+# System account user
+ynh_system_user_exists $app \
+  && ynh_die "$app system user account already exists. You should safely remove the user account before installing this app."
+  
+# MySQL
+# TODO: check if user exists (to prevent deletion in remove script)
+ynh_mysql_execute_as_root '' $dbname > /dev/null 2>&1 \
+  && ynh_die "SQL database already exists. You should safely delete it before installing this app."
 
-sudo cp -a ../source/$arch/. $ts3_path
+# Remove checks setting as it's unecessary - setup should run perfectly
+ynh_app_setting_delete $app chk_fail
 
-# Configure TS3 + MySQL / MariaDB
-sed -i "s@DB_USER@$db_user@g" ../config/ts3db_mariadb.ini
-sed -i "s@DB_PW@$db_pwd@g" ../config/ts3db_mariadb.ini
-sed -i "s@TS_USER@$db_user@g" ../config/ts3server.service
-sudo cp ../config/ts3db_mariadb.ini $ts3_path/ts3db_mariadb.ini
-sudo cp ../config/ts3server.ini $ts3_path/ts3server.ini
-sudo cp ../config/ts3server.service /lib/systemd/system/$app.service
-sudo chown -R $db_user:$db_user $ts3_path
-sudo systemctl daemon-reload
+##
+## Beginning setup
+##
+  
+# Admin user
+ynh_app_setting_set $app admin $admin
 
-# Install required lib libmariadb2
-cd /tmp/
+# System account user
+sudo useradd -c "$app system account" -d "$server_root" --system --user-group $app \
+  || ynh_die "Unable to create $app system account."
+  
+# Server root directory (must set ownership before extraction)
+sudo mkdir -p "$server_root"
+sudo chown -R $app: "$server_root"
+ynh_app_setting_set $app server_root "$server_root"
 
-if [ "$platform" = "64" ];
-then
-  arch=amd64
-fi
-
-if [ "$platform" = "32" ];
-then
-  arch=i386
-fi
-
-sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_$arch.deb
-sudo dpkg -i libmariadb2_2.0.0-1_$arch.deb
-sudo rm libmariadb2_2.0.0-1_$arch.deb
-
+# MySQL
+ynh_mysql_create_db $dbname $dbuser $dbpass
+ynh_app_setting_set $app mysqlpwd $dbpass
 
 # Add firewall rules
 sudo yunohost firewall allow UDP 9987
 sudo yunohost firewall allow TCP 10011
 sudo yunohost firewall allow TCP 30033
 
+##
+## Installation and Ownership/Permissions
+##
+
+# Copy source file to server root
+if [ "$arch" = "64" ];
+then
+  arch=amd64
+fi
+
+if [ "$arch" = "32" ];
+then
+  arch=x86
+fi
+
+sudo cp -a ../source/$arch/. $ts3_path
+
+# Write values to config templates
+sed -i "s@DBUSER@$dbuser@g" ../config/ts3db_mariadb.ini
+sed -i "s@DBPW@$dbpass@g" ../config/ts3db_mariadb.ini
+sed -i "s@APP@$app@g" ../config/ts3db_mariadb.ini
+sed -i "s@TS_USER@$dbuser@g" ../config/ts3server.service
+sed -i "s@SERVER_ROOT@$server_root@g" ../config/ts3server.service
+sudo cp ../config/ts3db_mariadb.ini "${server_root}/ts3db_mariadb.ini"
+sudo cp ../config/ts3server.ini "${server_root}/ts3server.ini"
+
+# Copy service file to respective location
+# TODO: replace with init.d script
+sudo cp ../config/ts3server.service /lib/systemd/system/${app}.service
+sudo systemctl daemon-reload
+
+# Finalize ownerships and permissions
+sudo chown -R $app: "$app_root"
+sudo chmod 750 "$app_root"
+sudo find ${app_root}/ -type d -print0 | sudo xargs -0 chmod 750
+sudo find ${app_root}/ -type f -print0 | sudo xargs -0 chmod 640
+sudo find ${app_root}/ -type f -name "*.sh" -print0 -o -name "ts3server" -print0 | sudo xargs -0 chmod 750
+
+##
+## Finishing touches
+##
+
+# Install required lib libmariadb2
+cd /tmp/
+
+if [ "$arch" = "64" ];
+then
+  arch=amd64
+fi
+
+if [ "$arch" = "32" ];
+then
+  arch=x86
+fi
+
+sudo wget http://ftp.de.debian.org/debian/pool/main/m/mariadb-client-lgpl/libmariadb2_2.0.0-1_$arch.deb
+sudo dpkg -i libmariadb2_2.0.0-1_$arch.deb
+sudo rm libmariadb2_2.0.0-1_$arch.deb
+
 # Enable and start service
-sudo systemctl enable $app.service
-sudo systemctl start $app.service
+sudo systemctl enable ${app}.service
 sudo yunohost service add $app
+sudo yunohost service start $app

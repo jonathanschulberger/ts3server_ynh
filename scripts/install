@@ -138,7 +138,7 @@ sudo find ${app_root}/ -type f -name "*.sh" -print0 -o -name "ts3server" -print0
 
 # Enable and start service
 sudo systemctl enable ${app}.service
-sudo yunohost service add $app
+sudo yunohost service add $app -l "${server_root}/logs/ts3server_1.log" "${server_root}/logs/ts3server_0.log"
 sudo yunohost service start $app
 
 # Let's use the initial log file to get the admin token

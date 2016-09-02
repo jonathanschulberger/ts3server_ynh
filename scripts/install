@@ -102,11 +102,8 @@ extract_ts3server $arch "$server_root" $app
 sed -i "s@DBUSER@$dbuser@g" ../config/ts3db_mariadb.ini
 sed -i "s@DBPW@$dbpass@g" ../config/ts3db_mariadb.ini
 sed -i "s@APP@$app@g" ../config/ts3db_mariadb.ini
-#sed -i "s@TS_USER@$dbuser@g" ../config/ts3server.service
-#sed -i "s@SERVER_ROOT@$server_root@g" ../config/ts3server.service
-sed -i "s@TS_USER@$dbuser@g" ../config/ts3server.init.d
-sed -i "s@SERVER_ROOT@$server_root@g" ../config/ts3server.init.d
-#
+sed -i "s@TS_USER@$dbuser@g" ../config/ts3server.service
+sed -i "s@SERVER_ROOT@$server_root@g" ../config/ts3server.service
 sed -i "s@PT_VOICE@${ports[voice]}@g" ../config/ts3server_mariadb.ini
 sed -i "s@PT_QUERY@${ports[query]}@g" ../config/ts3server_mariadb.ini
 sed -i "s@PT_FILE@${ports[filetr]}@g" ../config/ts3server_mariadb.ini
@@ -124,10 +121,9 @@ else
 fi
 
 # Copy service file to respective location
-# TODO: replace with init.d script
-#sudo cp ../config/${app}.service /lib/systemd/system/${app}.service
-#sudo systemctl daemon-reload
-sudo cp "../config/${app}.init.d" "/etc/init.d/${app}"
+# TODO: Maybe replace with init.d
+sudo cp ../config/${app}.service /lib/systemd/system/${app}.service
+sudo systemctl daemon-reload
 
 
 # Finalize ownerships and permissions
@@ -136,18 +132,13 @@ sudo chmod 750 "$app_root"
 sudo find ${app_root}/ -type d -print0 | sudo xargs -0 chmod 750
 sudo find ${app_root}/ -type f -print0 | sudo xargs -0 chmod 640
 sudo find ${app_root}/ -type f -name "*.sh" -print0 -o -name "ts3server" -print0 | sudo xargs -0 chmod 750
-#init.d
-sudo chmod 755 "/etc/init.d/${app}"
-sudo chown root:root "/etc/init.d/${app}"
 
 ##
 ## Finishing touches
 ##
 
 # Enable and start service
-#sudo systemctl enable ${app}.service
-sudo update-rc.d $app defaults
-sudo update-rc.d $app enable
+sudo systemctl enable ${app}.service
 sudo yunohost service add $app -l "${server_root}/logs/ts3server_1.log" "${server_root}/logs/ts3server_0.log"
 sudo yunohost service start $app
 

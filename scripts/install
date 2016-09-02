@@ -22,6 +22,7 @@ declare -A ports=( [voice]=$YNH_APP_ARG_PORT_VOICE \
 dbname=$app
 dbuser=$app
 dbpass=$(ynh_string_random 16)
+sapass=$(ynh_string_random 8)
 app_root="/home/yunohost.app/$app"
 server_root="${app_root}/server"
 
@@ -140,7 +141,14 @@ sudo find ${app_root}/ -type f -name "*.sh" -print0 -o -name "ts3server" -print0
 # Enable and start service
 sudo systemctl enable ${app}.service
 sudo yunohost service add $app -l "${server_root}/logs/ts3server_1.log" "${server_root}/logs/ts3server_0.log"
+
+# Set serveradmin password and start
+sudo sh -c "echo serveradmin_password=${sapass} >> ${server_root}/ts3server.ini" \
+      || ynh_die "Could not set serveradmin password in config file. Aborting."
 sudo yunohost service start $app
+# Remove password from config file
+sudo sed -i '/serveradmin_password/d' "${server_root}/ts3server.ini"
+ynh_app_setting_set $app sapass $sapass
 
 # Let's use the initial log file to get the admin token
 # Wait for generation of file

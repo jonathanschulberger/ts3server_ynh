@@ -29,7 +29,7 @@ else
 
 	# Server root folder
 	# TODO: also remove backup path or tell user to manually remove
-	sudo rm -rf "$(ynh_app_setting_get $app server_root)" || true
+	#sudo rm -rf "$(ynh_app_setting_get $app server_root)" || true
 
 	# Remove firewall rules
 	# TODO: Get these from ts3server.ini

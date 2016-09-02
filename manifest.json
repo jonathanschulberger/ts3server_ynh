@@ -17,7 +17,7 @@
 	},
 	"multi_instance": false,
     "services": [ 
-		"mariadb",
+		"mysql",
 		"nginx",
 		"php5-fpm"
 	],

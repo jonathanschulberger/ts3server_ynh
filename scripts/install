@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# causes the shell to exit if any subcommand or pipeline returns a non-zero status
-set -eu
+set -e
 
 # YunoHost app helpers
 source /usr/share/yunohost/helpers
@@ -28,7 +27,7 @@ server_root="${app_root}/server"
 
 ##
 ## Beginning checks
-## 
+##
 
 # Helps keep removal script simpler and more accurate by removing
 #  the need for checks in BOTH install and remove scripts
@@ -40,18 +39,18 @@ ynh_app_setting_set $app chk_fail 0
 # YunoHost admin user
 ynh_user_exists $admin \
   || ynh_die "The chosen admin user does not exist."
-  
+
 # System account user
 ynh_system_user_exists $app \
   && ynh_die "$app system user account already exists. You should safely remove the user account before installing this app."
-  
+
 # Server root directory
 [[ -d "$server_root" ]] \
   && ynh_die "The directory '$server_root' already exists. You should safely delete it before installing this app."
-  
+
 # MySQL
 # TODO: check if user exists (to prevent deletion in remove script)
-ynh_mysql_execute_as_root '' $dbname > /dev/null 2>&1 \
+ynh_mysql_execute_as_root '' $dbname &> /dev/null \
   && ynh_die "SQL database already exists. You should safely delete it before installing this app."
 
 # Ports
@@ -60,7 +59,7 @@ for i in "${ports[@]}"; do
 		ynh_die "Only numbers are allowed for port definitions."
 	elif [[ $i -le 1024 ]]; then
 		ynh_die "Ports must be higher than 1024."
-	fi	
+	fi
 done
 
 # Remove checks setting as it's unecessary - setup should run perfectly
@@ -113,6 +112,7 @@ sed -i "s@PT_QUERY@${ports[query]}@g" ../config/ts3server_sqlite.ini
 sed -i "s@PT_FILE@${ports[filetr]}@g" ../config/ts3server_sqlite.ini
 
 # Config file and necessary plugin installation
+# TODO: Condense to single config file
 if [[ $dbtype == "MariaDB" ]]; then
 	sudo cp "${server_root}/redist/libmariadb.so.2" "${server_root}/libmariadb.so.2"
 	sudo cp ../config/ts3db_mariadb.ini "${server_root}/ts3db_mariadb.ini"
@@ -129,10 +129,8 @@ sudo systemctl daemon-reload
 
 # Finalize ownerships and permissions
 sudo chown -R $app: "$app_root"
-sudo chmod 750 "$app_root"
-sudo find ${app_root}/ -type d -print0 | sudo xargs -0 chmod 750
-sudo find ${app_root}/ -type f -print0 | sudo xargs -0 chmod 640
-sudo find ${app_root}/ -type f -name "*.sh" -print0 -o -name "ts3server" -print0 | sudo xargs -0 chmod 750
+sudo chmod -R u=rwX,g=rX,o= "$app_root"
+sudo find "${app_root}" -type f -name "*.sh" -o -name "ts3server" -exec chmod u+x,g+x {} \;
 
 ##
 ## Finishing touches
@@ -143,9 +141,9 @@ sudo systemctl enable ${app}.service
 sudo yunohost service add $app -l "${server_root}/logs/ts3server_1.log" "${server_root}/logs/ts3server_0.log"
 
 # Set serveradmin password and start
-sudo sh -c "echo serveradmin_password=${sapass} >> ${server_root}/ts3server.ini" \
-      || ynh_die "Could not set serveradmin password in config file. Aborting."
+sudo echo "serveradmin_password=${sapass}" | sudo tee -a "${server_root}/ts3server.ini"
 sudo yunohost service start $app
+
 # Remove password from config file
 sudo sed -i '/serveradmin_password/d' "${server_root}/ts3server.ini"
 ynh_app_setting_set $app sapass $sapass

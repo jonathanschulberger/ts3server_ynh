@@ -2,8 +2,7 @@
 
 # NEED TO REWORK ENTIRE SCRIPT
 
-# causes the shell to exit if any subcommand or pipeline returns a non-zero status
-set -eu
+set -e
 
 # The user used to execute teamspeak
 app=$YNH_APP_INSTANCE_NAME

@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# causes the shell to exit if any subcommand or pipeline returns a non-zero status
 set -e
 
 # Source YunoHost helpers
@@ -20,7 +19,7 @@ else
 	sudo systemctl disable $app.service || true
 	sudo rm /lib/systemd/system/$app.service || true
 	sudo systemctl daemon-reload
-	
+
 	# YunoHost service
 	sudo yunohost service remove $app || true
 
@@ -28,11 +27,13 @@ else
 	sudo userdel -r $app || true
 
 	# Server root folder
+	# TODO: remove app root not just server root
 	# TODO: also remove backup path or tell user to manually remove
-	#sudo rm -rf "$(ynh_app_setting_get $app server_root)" || true
+	sudo rm -rf "$(ynh_app_setting_get $app server_root)" || true
 
 	# Remove firewall rules
 	# TODO: Get these from ts3server.ini
+	# TODO: Get these from app settings
 	sudo yunohost firewall disallow --no-reload UDP 9987
 	sudo yunohost firewall disallow --no-reload TCP 10011
 	sudo yunohost firewall disallow TCP 30033

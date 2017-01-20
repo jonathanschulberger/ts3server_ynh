@@ -33,7 +33,7 @@ extract_ts3server() {
 	
 	# Retrieve tar.bz2
 	ts3server_src="/tmp/ts3server.tar.bz2"
-	rm -f "$ts3server_src"
+	sudo rm -f "$ts3server_src"
 	
 	# Download source and verify checksum
 	wget -q -O "$ts3server_src" "$(sed -e "s/ARCH/${ARCH}/g" <<< $SOURCE_URL)" \
@@ -44,7 +44,7 @@ extract_ts3server() {
 	# Extract source to specified directory
 	exec_as "$USER" tar -xjf "$ts3server_src" -C "$DESTDIR" --strip-components 1 \
 		|| ynh_die "Unable to extract Teamspeak 3 server source."
-	rm -f "$ts3server_src"
+	sudo rm -f "$ts3server_src"
 }
 
 # Execute a command as another user (sourced from owncloud_ynh)
